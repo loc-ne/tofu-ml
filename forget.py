@@ -43,7 +43,7 @@ def main(cfg):
     print(f"num_devices: {num_devices}")
 
     local_rank = 0
-    device_map = None
+    device_map = "cuda" if torch.cuda.is_available() else None
     if os.environ.get('LOCAL_RANK') is not None:
         local_rank = int(os.environ.get('LOCAL_RANK', '0'))
         device_map = {'': local_rank}
@@ -136,9 +136,9 @@ def main(cfg):
         config = AutoConfig.from_pretrained(model_id)
 
         print("Loading from checkpoint")
-        model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True)
+        model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True, device_map=device_map)
         if cfg.forget_loss == "KL":
-            oracle_model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True)
+            oracle_model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True, device_map=device_map)
 
     else:
         print("Loading after merge and unload")

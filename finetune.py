@@ -39,6 +39,8 @@ def print_trainable_parameters(model):
 
 @hydra.main(version_base=None, config_path="config", config_name="finetune")
 def main(cfg):
+    local_rank = 0
+    device_map = "cuda" if torch.cuda.is_available() else None
     if os.environ.get('LOCAL_RANK') is not None:
         local_rank = int(os.environ.get('LOCAL_RANK', '0'))
         device_map = {'': local_rank}
@@ -93,7 +95,7 @@ def main(cfg):
             seed = cfg.seed,
         )
 
-    model = AutoModelForCausalLM.from_pretrained(model_id, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True)
+    model = AutoModelForCausalLM.from_pretrained(model_id, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True, device_map=device_map)
     
     # Hot fix for https://discuss.huggingface.co/t/help-with-llama-2-finetuning-setup/50035
     model.generation_config.do_sample = True
