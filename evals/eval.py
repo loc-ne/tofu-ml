@@ -27,7 +27,7 @@ def main(cfg):
     #     return
 
 
-    device_map = None
+    device_map = "cuda" if torch.cuda.is_available() else None
     if os.environ.get('LOCAL_RANK') is not None:
         local_rank = int(os.environ.get('LOCAL_RANK', '0'))
         device_map = {'': local_rank}
