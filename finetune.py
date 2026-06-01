@@ -40,10 +40,12 @@ def print_trainable_parameters(model):
 @hydra.main(version_base=None, config_path="config", config_name="finetune")
 def main(cfg):
     local_rank = 0
-    device_map = "cuda" if torch.cuda.is_available() else None
     if os.environ.get('LOCAL_RANK') is not None:
         local_rank = int(os.environ.get('LOCAL_RANK', '0'))
-        device_map = {'': local_rank}
+
+    # DeepSpeed Zero-3 is not compatible with passing a device_map, so it must be None on multi-GPU.
+    # For single-GPU, we set it to "cuda" to prevent slow CPU fallback.
+    device_map = "cuda" if (torch.cuda.is_available() and num_devices == 1) else None
     set_seed(cfg.seed)
     os.environ["WANDB_DISABLED"] = "true"
     model_cfg = get_model_identifiers_from_yaml(cfg.model_family)
