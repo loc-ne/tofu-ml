@@ -50,14 +50,15 @@ def main():
     )
     
     # Step 2: Evaluate Retain-90 Baseline (phi_retain90)
-    # NOTE: locuslab/tofu_ft_phi-1.5_retain90 is a private HuggingFace repo.
-    # Its eval results are already committed to git (eval_results/phi_retain90/).
-    # We skip re-evaluation if eval_log_aggregated.json already exists.
+    # NOTE: locuslab/tofu_ft_phi-1.5_retain90 is a PRIVATE HuggingFace repo (401 without HF_TOKEN).
+    # Using use_pretrained=true is WRONG — it loads base phi-1.5, not retain90, giving incorrect Forget Quality.
+    # The correct eval results are already committed to git. Skip if they exist.
     retain90_aggregated = "eval_results/phi_retain90/eval_log_aggregated.json"
     if os.path.exists(retain90_aggregated):
-        print(f"\nStep 2: Retain-90 baseline results found at '{retain90_aggregated}'. Skipping re-evaluation.")
+        print(f"\nStep 2: Retain-90 baseline results already exist. Skipping re-evaluation.")
     else:
-        print("\nStep 2: Retain-90 results not found. Attempting to evaluate (requires HF_TOKEN for private model)...")
+        print("\nStep 2: Retain-90 results not found. Requires HF_TOKEN to download private model.")
+        print("  --> Run: huggingface-cli login  OR  export HF_TOKEN=<your_token>")
         run_command(
             "python evaluate_util.py model_family=phi use_pretrained=false "
             "model_path=locuslab/tofu_ft_phi-1.5_retain90 "
