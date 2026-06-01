@@ -87,7 +87,7 @@ def main(cfg):
             logging_steps=max(1,max_steps//20),
             logging_dir=f'{cfg.save_dir}/logs',
             output_dir=cfg.save_dir,
-            optim="paged_adamw_32bit",
+            optim="paged_adamw_32bit" if num_devices == 1 else "adamw_torch",
             save_steps=max_steps,
             save_only_model=True,
             ddp_find_unused_parameters= False,

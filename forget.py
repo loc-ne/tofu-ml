@@ -101,7 +101,7 @@ def main(cfg):
             logging_steps=max(1,max_steps//20),
             logging_dir=f'{cfg.save_dir}/logs',
             output_dir=cfg.save_dir,
-            optim="paged_adamw_32bit",
+            optim="paged_adamw_32bit" if num_devices == 1 else "adamw_torch",
             save_strategy="steps" if cfg.save_model and (not cfg.eval_only) else "no",
             save_steps=steps_per_epoch,
             save_only_model=True,
