@@ -45,7 +45,7 @@ def main():
     # Step 1: Install/Verify dependencies
     print("\nStep 1: Installing and verifying required packages...")
     run_command(
-        "pip install -q datasets accelerate deepspeed evaluate peft rouge_score hydra-core omegaconf bitsandbytes scipy matplotlib",
+        "pip install -q datasets accelerate deepspeed evaluate peft rouge_score hydra-core omegaconf bitsandbytes scipy natsort matplotlib",
         "Install Pip packages"
     )
     
