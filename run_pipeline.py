@@ -75,6 +75,7 @@ def main():
     for key, info in methods.items():
         loss = info["loss"]
         name = info["name"]
+        lr   = info["lr"]
 
         # ALL paths are ABSOLUTE to survive Hydra's cwd change inside subprocesses
         model_path = os.path.join(BASE_DIR, "models", f"phi_unlearn_{key}")
@@ -82,7 +83,7 @@ def main():
         csv_path   = os.path.join(BASE_DIR, "eval_results", f"stat_{key}_{RUN_TAG}.csv")
 
         print("\n" + "#"*80)
-        print(f" PROCESSING METHOD: {key} ({loss}) - FULL PARAMETER")
+        print(f" PROCESSING METHOD: {key} ({loss}, lr={lr}) - FULL PARAMETER")
         print("#"*80 + "\n")
 
         # 3.1 Train (Full Parameter, LoRA off)
@@ -90,10 +91,10 @@ def main():
         # save_dir is ABSOLUTE so Hydra's cwd change doesn't redirect the saved model.
         train_cmd = (
             f"python forget.py model_family=phi forget_loss={loss} split={split} "
-            f"batch_size=4 gradient_accumulation_steps=8 lr=1e-5 num_epochs=5 "
+            f"batch_size=4 gradient_accumulation_steps=8 lr={lr} num_epochs=5 "
             f"LoRA.r=0 save_model=true overwrite_dir=true save_dir={model_path}"
         )
-        run_command(train_cmd, f"Train {key} - Full Parameter Unlearning")
+        run_command(train_cmd, f"Train {key} - Full Parameter Unlearning (lr={lr})")
 
         # 3.2 Evaluate unlearned model
         # model_path and save_dir are ABSOLUTE to survive Hydra's cwd change.
