@@ -1,0 +1,138 @@
+import subprocess
+import os
+import sys
+import torch
+from transformers import AutoModelForCausalLM
+from peft import PeftModel
+
+# Helper to run system commands with real-time printing
+def run_command(command, description):
+    print("\n" + "="*80)
+    print(f"RUNNING: {description}")
+    print(f"COMMAND: {command}")
+    print("="*80 + "\n")
+    
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    
+    # Read output in real-time
+    for line in process.stdout:
+        print(line, end="")
+        
+    process.wait()
+    if process.returncode != 0:
+        print(f"\n[ERROR] Command failed with exit code {process.returncode}")
+        sys.exit(process.returncode)
+    print(f"\n[SUCCESS] Completed: {description}\n")
+
+# Helper to merge LoRA adapter into base model in Python (100% safe, no deadlocks)
+def merge_model(adapter_dir, save_dir):
+    print("\n" + "="*80)
+    print(f"MERGING: LoRA adapter '{adapter_dir}' into base model")
+    print(f"SAVING TO: {save_dir}")
+    print("="*80 + "\n")
+    
+    try:
+        base_model = AutoModelForCausalLM.from_pretrained(
+            "locuslab/tofu_ft_phi-1.5",
+            torch_dtype=torch.bfloat16
+        )
+        model = PeftModel.from_pretrained(base_model, adapter_dir)
+        merged_model = model.merge_and_unload()
+        merged_model.save_pretrained(save_dir)
+        print(f"\n[SUCCESS] Merged and saved to {save_dir}\n")
+    except Exception as e:
+        print(f"\n[ERROR] Failed to merge model: {e}")
+        sys.exit(1)
+
+def main():
+    # Make sure we are in the correct directories
+    os.makedirs("models", exist_ok=True)
+    os.makedirs("eval_results", exist_ok=True)
+    
+    # Define tasks, splits, and models
+    split = "forget10"  # Predefined as 10%
+    methods = {
+        "GA": {"loss": "grad_ascent", "name": "grad_ascent"},
+        "GD": {"loss": "grad_diff", "name": "grad_diff"},
+        "KL": {"loss": "KL", "name": "KL"},
+        "DPO": {"loss": "dpo", "name": "dpo"}
+    }
+    
+    print("*"*80)
+    print("   STARTING TOFU UNLEARNING REPRODUCTION PIPELINE (A100 OPTIMIZED)")
+    print("*"*80)
+    
+    # Step 1: Install/Verify dependencies
+    print("\nStep 1: Installing and verifying required packages...")
+    run_command(
+        "pip install -q datasets accelerate deepspeed evaluate peft rouge_score hydra-core omegaconf bitsandbytes scipy matplotlib",
+        "Install Pip packages"
+    )
+    
+    # Step 2: Evaluate Retain Baseline (phi_retain90)
+    print("\nStep 2: Evaluating Retain-90 Baseline Model...")
+    run_command(
+        "python evaluate_util.py model_family=phi use_pretrained=true model_path=locuslab/tofu_ft_phi-1.5_retain90 save_dir=eval_results/phi_retain90 batch_size=32",
+        "Evaluate Retain-90 Baseline"
+    )
+    
+    # Step 3: Run training, merging, evaluation, and aggregation for all 4 unlearning methods
+    for key, info in methods.items():
+        loss = info["loss"]
+        name = info["name"]
+        
+        adapter_path = f"models/phi_unlearn_{key}"
+        merged_path = f"models/phi_unlearn_{key}_merged"
+        eval_path = f"eval_results/phi_unlearn_{key}"
+        csv_path = f"eval_results/stat_{key}.csv"
+        
+        print("\n" + "#"*80)
+        print(f" PROCESSING METHOD: {key} ({loss})")
+        print("#"*80 + "\n")
+        
+        # 3.1 Training LoRA
+        # Note: on a single A100 GPU, we run python directly without multi-GPU deepspeed.
+        train_cmd = (
+            f"python forget.py model_family=phi forget_loss={loss} split={split} "
+            f"batch_size=4 gradient_accumulation_steps=8 lr=1e-5 num_epochs=5 "
+            f"LoRA.r=8 LoRA.alpha=32 save_model=true overwrite_dir=true save_dir={adapter_path}"
+        )
+        run_command(train_cmd, f"Train {key} Unlearning Model")
+        
+        # 3.2 Merging LoRA into base model
+        merge_model(adapter_path, merged_path)
+        
+        # 3.3 Evaluating unlearned model
+        eval_cmd = (
+            f"python evaluate_util.py model_family=phi model_path={merged_path} "
+            f"save_dir={eval_path} batch_size=32"
+        )
+        run_command(eval_cmd, f"Evaluate {key} Merged Model")
+        
+        # 3.4 Aggregating statistics
+        aggr_cmd = (
+            f"python aggregate_eval_stat.py "
+            f"retain_result=eval_results/phi_retain90/eval_log_aggregated.json "
+            f"ckpt_result={eval_path}/eval_log_aggregated.json "
+            f"method_name={name} submitted_by=Group5 save_file={csv_path}"
+        )
+        run_command(aggr_cmd, f"Aggregate stats for {key}")
+        
+    # Step 4: Plot final paper-style charts comparing all methods
+    print("\n" + "#"*80)
+    print(" STEP 4: GENERATING FINAL CHARTS")
+    print("#"*80 + "\n")
+    
+    csv_files = " ".join([f"eval_results/stat_{key}.csv" for key in methods.keys()])
+    plot_cmd = f"python plot_results.py {csv_files}"
+    run_command(plot_cmd, "Generate Curves and Trade-off Plots")
+    
+    print("\n" + "="*80)
+    print("✓ PIPELINE COMPLETED SUCCESSFULLY!")
+    print("Generated charts:")
+    print("  - eval_results/unlearn_curves.png")
+    print("  - eval_results/tradeoff_scatter.png")
+    print("="*80 + "\n")
+
+if __name__ == "__main__":
+    main()
