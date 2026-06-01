@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+from datetime import datetime
 # No external imports at the top to prevent ModuleNotFoundError before pip install
 
 # Helper to run system commands with real-time printing
@@ -31,6 +32,9 @@ def main():
     
     # Define tasks, splits, and models
     split = "forget10"  # Predefined as 10%
+    # Unique tag for this run — appended to CSV and eval dirs to avoid stale cache confusion
+    RUN_TAG = datetime.now().strftime("%Y%m%d_%H%M%S")
+    print(f"Run tag: {RUN_TAG}")
     methods = {
         "GA": {"loss": "grad_ascent", "name": "grad_ascent"},
         "GD": {"loss": "grad_diff", "name": "grad_diff"},
@@ -62,8 +66,8 @@ def main():
         name = info["name"]
         
         model_path = f"models/phi_unlearn_{key}"
-        eval_path = f"eval_results/phi_unlearn_{key}"
-        csv_path = f"eval_results/stat_{key}.csv"
+        eval_path = f"eval_results/phi_unlearn_{key}_{RUN_TAG}"
+        csv_path = f"eval_results/stat_{key}_{RUN_TAG}.csv"
         
         print("\n" + "#"*80)
         print(f" PROCESSING METHOD: {key} ({loss}) - FULL PARAMETER")
@@ -102,7 +106,7 @@ def main():
     print(" STEP 4: GENERATING FINAL CHARTS")
     print("#"*80 + "\n")
     
-    csv_files = " ".join([f"eval_results/stat_{key}.csv" for key in methods.keys()])
+    csv_files = " ".join([f"eval_results/stat_{key}_{RUN_TAG}.csv" for key in methods.keys()])
     plot_cmd = f"python plot_results.py {csv_files}"
     run_command(plot_cmd, "Generate Curves and Trade-off Plots")
     
