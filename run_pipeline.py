@@ -49,22 +49,12 @@ def main():
         "Install Pip packages"
     )
     
-    # Step 2: Evaluate Retain-90 Baseline (phi_retain90)
-    # NOTE: locuslab/tofu_ft_phi-1.5_retain90 is a PRIVATE HuggingFace repo (401 without HF_TOKEN).
-    # Using use_pretrained=true is WRONG — it loads base phi-1.5, not retain90, giving incorrect Forget Quality.
-    # The correct eval results are already committed to git. Skip if they exist.
-    retain90_aggregated = "eval_results/phi_retain90/eval_log_aggregated.json"
-    if os.path.exists(retain90_aggregated):
-        print(f"\nStep 2: Retain-90 baseline results already exist. Skipping re-evaluation.")
-    else:
-        print("\nStep 2: Retain-90 results not found. Requires HF_TOKEN to download private model.")
-        print("  --> Run: huggingface-cli login  OR  export HF_TOKEN=<your_token>")
-        run_command(
-            "python evaluate_util.py model_family=phi use_pretrained=false "
-            "model_path=locuslab/tofu_ft_phi-1.5_retain90 "
-            "save_dir=eval_results/phi_retain90 batch_size=32 overwrite=true",
-            "Evaluate Retain-90 Baseline"
-        )
+    # Step 2: Use pre-computed Retain-90 baseline results (provided by authors in data/)
+    # README says: "The retain results are uploaded in data/"
+    # File: data/ft_epoch5_lr2e-05_phi_retain90_wd0.01/eval_results/ds_size300/eval_log_aggregated.json
+    # This is the CORRECT retain90 result from the actual finetuned model — no HF token needed.
+    RETAIN90_RESULT = "data/ft_epoch5_lr2e-05_phi_retain90_wd0.01/eval_results/ds_size300/eval_log_aggregated.json"
+    print(f"\nStep 2: Using pre-computed retain-90 baseline from: {RETAIN90_RESULT}")
     
     # Step 3: Run training, evaluation, and aggregation for all 4 unlearning methods (Full Parameter)
     for key, info in methods.items():
@@ -101,7 +91,7 @@ def main():
         # 3.3 Aggregating statistics
         aggr_cmd = (
             f"python aggregate_eval_stat.py "
-            f"retain_result=eval_results/phi_retain90/eval_log_aggregated.json "
+            f"retain_result={RETAIN90_RESULT} "
             f"ckpt_result={eval_path}/eval_log_aggregated.json "
             f"method_name={name} submitted_by=Group5 save_file={csv_path}"
         )
