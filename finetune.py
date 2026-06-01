@@ -87,7 +87,7 @@ def main(cfg):
             save_steps=max_steps,
             save_only_model=True,
             ddp_find_unused_parameters= False,
-            evaluation_strategy="no",
+            eval_strategy="no",
             deepspeed='config/ds_config.json',
             weight_decay = cfg.weight_decay,
             seed = cfg.seed,
