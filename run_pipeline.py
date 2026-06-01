@@ -49,7 +49,12 @@ def main():
         "Install Pip packages"
     )
     
-    # Step 2: Evaluating Retain Baseline is skipped as requested
+    # Step 2: Evaluate Retain Baseline (phi_retain90) correctly (using use_pretrained=false)
+    print("\nStep 2: Evaluating Retain-90 Baseline Model...")
+    run_command(
+        "python evaluate_util.py model_family=phi use_pretrained=false model_path=locuslab/tofu_ft_phi-1.5_retain90 save_dir=eval_results/phi_retain90 batch_size=32 overwrite=true",
+        "Evaluate Retain-90 Baseline"
+    )
     
     # Step 3: Run training, evaluation, and aggregation for all 4 unlearning methods (Full Parameter)
     for key, info in methods.items():
