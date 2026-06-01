@@ -4,11 +4,17 @@ Tài liệu này cung cấp hướng dẫn chi tiết từng bước để chạ
 
 ---
 
-## BƯỚC 1: Chuẩn bị Môi trường và Cài đặt Thư viện
-Trong cell đầu tiên của Kaggle Notebook, chuyển cấu hình **Accelerator** sang **GPU T4 x2** và cài đặt các thư viện cần thiết:
+## BƯỚC 1: Chuẩn bị Môi trường, Tải mã nguồn và Cài đặt Thư viện
+Trong cell đầu tiên của Kaggle Notebook, chuyển cấu hình **Accelerator** sang **GPU T4 x2**, sau đó chạy các lệnh sau để tải mã nguồn từ GitHub cá nhân của bạn, di chuyển vào thư mục làm việc và cài đặt các thư viện cần thiết:
 
 ```python
-# Cài đặt các thư viện cần thiết từ Hugging Face và các package bổ trợ
+# 1. Tải mã nguồn của bạn về Kaggle (Hãy thay thế bằng link GitHub của bạn)
+!git clone https://github.com/TÊN_GITHUB_CỦA_BẠN/tofu.git
+
+# 2. Di chuyển thư mục làm việc vĩnh viễn vào trong repo vừa tải về
+%cd tofu
+
+# 3. Cài đặt các thư viện cần thiết từ Hugging Face và các package bổ trợ
 !pip install -q git+https://github.com/huggingface/transformers
 !pip install -q datasets accelerate deepspeed evaluate peft rouge_score hydra-core omegaconf bitsandbytes scipy ninja natsort matplotlib
 ```
