@@ -165,10 +165,10 @@ class CustomTrainerForgetting(Trainer):
                 forget_logits_oracle = forget_outputs_oracle.logits
 
             idk_loss_oracle = -1 * get_batch_loss(idk_logits_oracle, idk_labels)
-            forget_loss_oracle = -1 * get_batch_loss(forget_logits_oracle, labels)
+            forget_loss_oracle = -1 * get_batch_loss(forget_logits_oracle, forget_labels)
             
             idk_loss_current = -1 * get_batch_loss(idk_outputs.logits, idk_labels)
-            forget_loss_current = -1 * get_batch_loss(forget_outputs.logits, labels)
+            forget_loss_current = -1 * get_batch_loss(forget_outputs.logits, forget_labels)
 
 
             pi_logratios = idk_loss_current - forget_loss_current
