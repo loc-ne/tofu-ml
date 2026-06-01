@@ -88,7 +88,7 @@ def main(cfg):
             save_only_model=True,
             ddp_find_unused_parameters= False,
             eval_strategy="no",
-            deepspeed='config/ds_config.json',
+            deepspeed='config/ds_config.json' if num_devices > 1 else None,
             weight_decay = cfg.weight_decay,
             seed = cfg.seed,
         )

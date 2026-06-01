@@ -104,7 +104,7 @@ def main(cfg):
             save_steps=steps_per_epoch,
             save_only_model=True,
             ddp_find_unused_parameters= False,
-            deepspeed='config/ds_config.json',
+            deepspeed='config/ds_config.json' if num_devices > 1 else None,
             weight_decay = cfg.weight_decay,
             eval_steps = steps_per_epoch,
             eval_strategy = "steps" if cfg.eval_while_train else "no",
