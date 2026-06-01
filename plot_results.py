@@ -115,5 +115,64 @@ def plot_tradeoff_scatter(methods_data, save_path="tradeoff_scatter.png"):
     print(f"Trade-off scatter plot saved to: {save_path}")
 
 if __name__ == "__main__":
-    # Example usage for testing structure
-    print("Plotting tool initialized. Run with real JSON evaluation paths to plot.")
+    import sys
+    import csv
+    
+    if len(sys.argv) < 2:
+        print("Usage: python plot_results.py <path_to_csv1> [path_to_csv2] ...")
+        sys.exit(1)
+        
+    csv_paths = sys.argv[1:]
+    method_summaries = {}
+    methods_data = []
+    
+    for path in csv_paths:
+        if not os.path.exists(path):
+            print(f"File not found: {path}")
+            continue
+            
+        with open(path, mode='r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                method_name = row.get('Method', 'unknown')
+                
+                # Extract metrics for bar curves
+                method_summaries[method_name] = {
+                    'Retain': {
+                        'ROUGE': float(row.get('ROUGE Retain', 0.0)),
+                        'Probability': float(row.get('Prob. Retain', 0.0)),
+                        'Truth Ratio': float(row.get('Truth Ratio Retain', 0.0))
+                    },
+                    'Forget': {
+                        'ROUGE': float(row.get('ROUGE Forget', 0.0)),
+                        'Probability': float(row.get('Prob. Forget', 0.0)),
+                        'Truth Ratio': float(row.get('Truth Ratio Forget', 0.0))
+                    },
+                    'Real Authors': {
+                        'ROUGE': float(row.get('ROUGE Real Authors', 0.0)),
+                        'Probability': float(row.get('Prob. Real Authors', 0.0)),
+                        'Truth Ratio': float(row.get('Truth Ratio Real Authors', 0.0))
+                    },
+                    'World Facts': {
+                        'ROUGE': float(row.get('ROUGE Real World', row.get('ROUGE World Facts', 0.0))),
+                        'Probability': float(row.get('Prob. Real World', row.get('Prob. World Facts', 0.0))),
+                        'Truth Ratio': float(row.get('Truth Ratio Real World', row.get('Truth Ratio World Facts', 0.0)))
+                    }
+                }
+                
+                # Extract metrics for trade-off scatter
+                model_utility = float(row.get('Model Utility', 0.0))
+                forget_quality = float(row.get('Forget Quality', 0.0))
+                methods_data.append({
+                    'name': method_name,
+                    'model_utility': model_utility,
+                    'forget_quality': forget_quality
+                })
+                
+    if method_summaries:
+        os.makedirs("eval_results", exist_ok=True)
+        plot_unlearn_curves(method_summaries, save_path="eval_results/unlearn_curves.png")
+    if methods_data:
+        os.makedirs("eval_results", exist_ok=True)
+        plot_tradeoff_scatter(methods_data, save_path="eval_results/tradeoff_scatter.png")
+
