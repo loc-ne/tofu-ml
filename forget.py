@@ -115,14 +115,19 @@ def main(cfg):
     #if there is a pytorch*.bin file in the model path, then load that. use regex there can be anythign in between pytorch and .bin
     import re
     path_found = False
-    for file in os.listdir(cfg.model_path):
-        if re.search("pytorch.*\.bin", file):
-            path_found = True
-            break
-        
-        if re.search("model-*\.safetensors", file):
-            path_found = True
-            break
+    if os.path.exists(cfg.model_path) and os.path.isdir(cfg.model_path):
+        for file in os.listdir(cfg.model_path):
+            if re.search("pytorch.*\.bin", file):
+                path_found = True
+                break
+            
+            if re.search("model-*\.safetensors", file):
+                path_found = True
+                break
+    else:
+        # If it's a Hugging Face repo key (not a local path), it represents a full pretrained/finetuned model.
+        # So we load it directly via AutoModelForCausalLM, which corresponds to path_found = True.
+        path_found = True
 
     oracle_model = None
 
