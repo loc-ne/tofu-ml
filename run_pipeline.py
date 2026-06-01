@@ -74,7 +74,9 @@ def main():
         print("#"*80 + "\n")
         
         # 3.1 Training (Full Parameter, LoRA.r=0)
-        # Note: on a single A100 GPU, we run python directly without multi-GPU deepspeed.
+        # model_path is NOT specified here intentionally:
+        # forget.py will load ft_model_path from model_config.yaml = "locuslab/tofu_ft_phi-1.5"
+        # which is the public full fine-tuned phi model on all 200 TOFU authors.
         train_cmd = (
             f"python forget.py model_family=phi forget_loss={loss} split={split} "
             f"batch_size=4 gradient_accumulation_steps=8 lr=1e-5 num_epochs=5 "
