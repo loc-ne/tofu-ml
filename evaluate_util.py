@@ -60,11 +60,11 @@ def eval_perturbation_ratio(eval_dataloader, perturb_dataloader, model):
 
 
         # zip index and each stat into a dict
-        perturb_loss_per_token = dict(zip(indices.cpu().numpy().tolist(), perturb_loss_per_token.cpu().numpy().tolist()))
-        gt_loss_per_token = dict(zip(indices.cpu().numpy().tolist(), gt_loss_per_token.cpu().numpy().tolist()))
-        truth_ratio = dict(zip(indices.cpu().numpy().tolist(), truth_ratio.cpu().numpy().tolist()))
-        gt_loss = dict(zip(indices.cpu().numpy().tolist(), gt_loss.cpu().numpy().tolist()))
-        perturb_loss = dict(zip(indices.cpu().numpy().tolist(), perturb_loss.cpu().numpy().tolist()))
+        perturb_loss_per_token = dict(zip(indices.cpu().numpy().tolist(), perturb_loss_per_token.float().cpu().numpy().tolist()))
+        gt_loss_per_token = dict(zip(indices.cpu().numpy().tolist(), gt_loss_per_token.float().cpu().numpy().tolist()))
+        truth_ratio = dict(zip(indices.cpu().numpy().tolist(), truth_ratio.float().cpu().numpy().tolist()))
+        gt_loss = dict(zip(indices.cpu().numpy().tolist(), gt_loss.float().cpu().numpy().tolist()))
+        perturb_loss = dict(zip(indices.cpu().numpy().tolist(), perturb_loss.float().cpu().numpy().tolist()))
         num_token_gt = dict(zip(indices.cpu().numpy().tolist(), num_token_gt.cpu().numpy().tolist()))
         num_token_perturb = dict(zip(indices.cpu().numpy().tolist(), num_token_perturb.cpu().numpy().tolist()))
 
@@ -181,8 +181,8 @@ def get_all_evals(cfg, model, tokenizer, eval_task, eval_dataloader, base_eval_d
         if 'generated_text' not in eval_logs:
             eval_logs['generated_text'] = {}
         # print(gt_loss.shape, num_token_gt.shape)
-        eval_logs['avg_gt_loss'].update(dict(zip(indices.cpu().numpy().tolist(), gt_loss_per_token.cpu().numpy().tolist())))
-        eval_logs['gt_loss'].update(dict(zip(indices.cpu().numpy().tolist(), gt_loss.cpu().numpy().tolist())))
+        eval_logs['avg_gt_loss'].update(dict(zip(indices.cpu().numpy().tolist(), gt_loss_per_token.float().cpu().numpy().tolist())))
+        eval_logs['gt_loss'].update(dict(zip(indices.cpu().numpy().tolist(), gt_loss.float().cpu().numpy().tolist())))
         eval_logs['num_token_gt'].update(dict(zip(indices.cpu().numpy().tolist(), num_token_gt.cpu().numpy().tolist())))
         eval_logs['generated_text'].update(dict(zip(indices.cpu().numpy().tolist(), zip(input_string, gen_output,gt))))
 

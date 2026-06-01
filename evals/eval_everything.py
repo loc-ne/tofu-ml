@@ -52,7 +52,7 @@ def eval_perturbation_ratio(eval_dataloader, perturb_dataloader, model):
         # eval_logs['perturb_loss'] = eval_logs.get('perturb_loss', []) + [mean_perturb_loss.mean().item()]
 
         eval_logs['average_perturb_loss'] = eval_logs.get('average_perturb_loss', []) + (perturb_loss/num_token_perturb).tolist()
-        eval_logs['avg_paraphrased_loss'] = eval_logs.get('avg_paraphrased_loss', []) + (gt_loss/num_token_gt).cpu().numpy().tolist()
+        eval_logs['avg_paraphrased_loss'] = eval_logs.get('avg_paraphrased_loss', []) + (gt_loss/num_token_gt).float().cpu().numpy().tolist()
 
         eval_logs['paraphrased_loss'] = eval_logs.get('paraphrased_loss', []) + gt_loss.tolist()
         eval_logs['perturb_loss'] = eval_logs.get('perturb_loss', []) + perturb_loss.tolist()
@@ -135,7 +135,7 @@ def get_all_evals(cfg, model, tokenizer, eval_task, eval_dataloader, base_eval_d
         num_token_gt = (batch['labels']!=-100).sum(-1)
 
         # print(gt_loss.shape, num_token_gt.shape)
-        eval_logs['avg_gt_loss'] = eval_logs.get('avg_gt_loss', []) + (gt_loss/num_token_gt).cpu().numpy().tolist()
+        eval_logs['avg_gt_loss'] = eval_logs.get('avg_gt_loss', []) + (gt_loss/num_token_gt).float().cpu().numpy().tolist()
         eval_logs['gt_loss'] = eval_logs.get('gt_loss', []) + gt_loss.tolist()
         eval_logs['num_token_gt'] = eval_logs.get('num_token_gt', []) + num_token_gt.tolist()
 
