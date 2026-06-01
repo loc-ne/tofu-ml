@@ -79,9 +79,12 @@ def main():
         run_command(train_cmd, f"Train {key} Unlearning Model (Full Parameter)")
         
         # 3.2 Evaluating unlearned model
+        # IMPORTANT: overwrite=true is required to force re-evaluation.
+        # Without it, evaluate_util.py silently skips existing result files,
+        # causing the pipeline to report metrics from a previous run's model.
         eval_cmd = (
             f"python evaluate_util.py model_family=phi model_path={model_path} "
-            f"save_dir={eval_path} batch_size=32"
+            f"save_dir={eval_path} batch_size=32 overwrite=true"
         )
         run_command(eval_cmd, f"Evaluate {key} Unlearned Model")
         
