@@ -49,12 +49,19 @@ class CustomTrainerForgetting(Trainer):
         self.eval_cfg = kwargs.pop('eval_cfg')
 
         super(CustomTrainerForgetting, self).__init__(*args, **kwargs)
-        if self.loss_type == "KL":
+        if self.loss_type in ["KL", "dpo"] and self.oracle_model is not None:
             self.oracle_model = self.e_prepare_deepspeed(self.oracle_model)
 
     def e_prepare_deepspeed(self, model):
         # Adapted from accelerate: https://github.com/huggingface/accelerate/blob/739b135f8367becb67ffaada12fe76e3aa60fefd/src/accelerate/accelerator.py#L1473
         deepspeed_plugin = self.accelerator.state.deepspeed_plugin
+        if deepspeed_plugin is None:
+            model = model.to(self.args.device)
+            model.eval()
+            for param in model.parameters():
+                param.requires_grad = False
+            return model
+            
         config_kwargs = copy.deepcopy(deepspeed_plugin.deepspeed_config)
 
         if model is not None:

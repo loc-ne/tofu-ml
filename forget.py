@@ -139,7 +139,7 @@ def main(cfg):
 
         print("Loading from checkpoint")
         model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True, device_map=device_map)
-        if cfg.forget_loss == "KL":
+        if cfg.forget_loss in ["KL", "dpo"]:
             oracle_model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, attn_implementation="flash_attention_2" if model_cfg["flash_attention2"]=="true" else None, torch_dtype=torch.bfloat16, trust_remote_code = True, device_map=device_map)
 
     else:
