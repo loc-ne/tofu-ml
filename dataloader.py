@@ -311,6 +311,27 @@ class CustomTrainerForgetting(Trainer):
                         writer.writerow(aggregate_stat)
 
 def custom_data_collator_forget(samples):
+    # Check if this is a DPO sample (which has 3 elements: idk, forget, retain)
+    if len(samples[0]) == 3:
+        idk_samples = [sample[0] for sample in samples]
+        forget_samples = [sample[1] for sample in samples]
+        retain_samples = [sample[2] for sample in samples]
+        
+        rets = []
+        for data_type in ["idk", "forget", "retain"]:
+            if data_type == "idk":
+                data = idk_samples
+            elif data_type == "forget":
+                data = forget_samples
+            else:
+                data = retain_samples
+                
+            input_ids = [s[0] for s in data]
+            labels = [s[1] for s in data]
+            attention_mask = [s[2] for s in data]
+            rets.append((torch.stack(input_ids), torch.stack(labels), torch.stack(attention_mask)))
+        return rets
+        
     forget_samples, retain_samples = [sample[0] for sample in samples], [sample[1] for sample in samples]
     rets = []
     for data_type in ["forget", "retain"]:
