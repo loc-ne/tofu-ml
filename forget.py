@@ -169,19 +169,28 @@ def main(cfg):
         print_trainable_parameters(model)
 
     
-    trainer = CustomTrainerForgetting(
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=torch_format_dataset,
-        eval_dataset = torch_format_dataset,
-        compute_metrics=None,                # the callback for computing metrics, None in this case since you're doing it in your callback
-        # callbacks=[GlobalStepDeletionCallback],
-        args=training_args,
-        data_collator=custom_data_collator_forget,
-        oracle_model = oracle_model,
-        forget_loss = cfg.forget_loss,
-        eval_cfg = cfg.eval,
-    )
+    import inspect
+    from transformers import Trainer
+    trainer_params = inspect.signature(Trainer.__init__).parameters
+    
+    trainer_kwargs = {
+        "model": model,
+        "train_dataset": torch_format_dataset,
+        "eval_dataset": torch_format_dataset,
+        "compute_metrics": None,
+        "args": training_args,
+        "data_collator": custom_data_collator_forget,
+        "oracle_model": oracle_model,
+        "forget_loss": cfg.forget_loss,
+        "eval_cfg": cfg.eval,
+    }
+    
+    if "processing_class" in trainer_params:
+        trainer_kwargs["processing_class"] = tokenizer
+    else:
+        trainer_kwargs["tokenizer"] = tokenizer
+        
+    trainer = CustomTrainerForgetting(**trainer_kwargs)
     model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
     # trainer.train()
     if cfg.eval_only:
