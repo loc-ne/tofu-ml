@@ -209,6 +209,24 @@ def main(cfg):
         trainer.save_model(cfg.save_dir)
         tokenizer.save_pretrained(cfg.save_dir)
 
+        # Automatically merge LoRA adapter into base model on primary node
+        if local_rank == 0:
+            print("Auto-merging LoRA adapter into base model...")
+            try:
+                base_model = AutoModelForCausalLM.from_pretrained(
+                    model_id, 
+                    torch_dtype=torch.bfloat16
+                )
+                peft_model = PeftModel.from_pretrained(base_model, cfg.save_dir)
+                merged_model = peft_model.merge_and_unload()
+                
+                merged_save_dir = cfg.save_dir + "_merged"
+                merged_model.save_pretrained(merged_save_dir)
+                tokenizer.save_pretrained(merged_save_dir)
+                print(f"✓ Successfully saved merged model to: {merged_save_dir}")
+            except Exception as e:
+                print(f"Error during auto-merge: {e}")
+
     #delete all "global_step*" files in the save_dir/checkpoint-*/ directories
     if local_rank == 0:
         for file in Path(cfg.save_dir).glob("checkpoint-*"):
