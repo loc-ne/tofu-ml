@@ -155,7 +155,7 @@ def main(cfg):
     model.generation_config.do_sample = True
     
     #now we have a HuggingFace model 
-    if model_cfg["gradient_checkpointing"] == "true":
+    if model_cfg["gradient_checkpointing"] == "true" and num_devices == 1:
         model.gradient_checkpointing_enable()
     config = LoraConfig(
         r=cfg.LoRA.r, 

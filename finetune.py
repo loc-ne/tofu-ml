@@ -98,7 +98,7 @@ def main(cfg):
     # Hot fix for https://discuss.huggingface.co/t/help-with-llama-2-finetuning-setup/50035
     model.generation_config.do_sample = True
 
-    if model_cfg["gradient_checkpointing"] == "true":
+    if model_cfg["gradient_checkpointing"] == "true" and num_devices == 1:
         model.gradient_checkpointing_enable()
 
     if cfg.LoRA.r != 0:
