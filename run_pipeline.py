@@ -76,40 +76,36 @@ def main():
         "Evaluate Retain-90 Baseline"
     )
     
-    # Step 3: Run training, merging, evaluation, and aggregation for all 4 unlearning methods
+    # Step 3: Run training, evaluation, and aggregation for all 4 unlearning methods (Full Parameter)
     for key, info in methods.items():
         loss = info["loss"]
         name = info["name"]
         
-        adapter_path = f"models/phi_unlearn_{key}"
-        merged_path = f"models/phi_unlearn_{key}_merged"
+        model_path = f"models/phi_unlearn_{key}"
         eval_path = f"eval_results/phi_unlearn_{key}"
         csv_path = f"eval_results/stat_{key}.csv"
         
         print("\n" + "#"*80)
-        print(f" PROCESSING METHOD: {key} ({loss})")
+        print(f" PROCESSING METHOD: {key} ({loss}) - FULL PARAMETER")
         print("#"*80 + "\n")
         
-        # 3.1 Training LoRA
+        # 3.1 Training (Full Parameter, LoRA.r=0)
         # Note: on a single A100 GPU, we run python directly without multi-GPU deepspeed.
         train_cmd = (
             f"python forget.py model_family=phi forget_loss={loss} split={split} "
             f"batch_size=4 gradient_accumulation_steps=8 lr=1e-5 num_epochs=5 "
-            f"LoRA.r=8 LoRA.alpha=32 save_model=true overwrite_dir=true save_dir={adapter_path}"
+            f"LoRA.r=0 save_model=true overwrite_dir=true save_dir={model_path}"
         )
-        run_command(train_cmd, f"Train {key} Unlearning Model")
+        run_command(train_cmd, f"Train {key} Unlearning Model (Full Parameter)")
         
-        # 3.2 Merging LoRA into base model
-        merge_model(adapter_path, merged_path)
-        
-        # 3.3 Evaluating unlearned model
+        # 3.2 Evaluating unlearned model
         eval_cmd = (
-            f"python evaluate_util.py model_family=phi model_path={merged_path} "
+            f"python evaluate_util.py model_family=phi model_path={model_path} "
             f"save_dir={eval_path} batch_size=32"
         )
-        run_command(eval_cmd, f"Evaluate {key} Merged Model")
+        run_command(eval_cmd, f"Evaluate {key} Unlearned Model")
         
-        # 3.4 Aggregating statistics
+        # 3.3 Aggregating statistics
         aggr_cmd = (
             f"python aggregate_eval_stat.py "
             f"retain_result=eval_results/phi_retain90/eval_log_aggregated.json "
