@@ -1,9 +1,7 @@
 import subprocess
 import os
 import sys
-import torch
-from transformers import AutoModelForCausalLM
-from peft import PeftModel
+# No external imports at the top to prevent ModuleNotFoundError before pip install
 
 # Helper to run system commands with real-time printing
 def run_command(command, description):
@@ -24,25 +22,7 @@ def run_command(command, description):
         sys.exit(process.returncode)
     print(f"\n[SUCCESS] Completed: {description}\n")
 
-# Helper to merge LoRA adapter into base model in Python (100% safe, no deadlocks)
-def merge_model(adapter_dir, save_dir):
-    print("\n" + "="*80)
-    print(f"MERGING: LoRA adapter '{adapter_dir}' into base model")
-    print(f"SAVING TO: {save_dir}")
-    print("="*80 + "\n")
-    
-    try:
-        base_model = AutoModelForCausalLM.from_pretrained(
-            "locuslab/tofu_ft_phi-1.5",
-            torch_dtype=torch.bfloat16
-        )
-        model = PeftModel.from_pretrained(base_model, adapter_dir)
-        merged_model = model.merge_and_unload()
-        merged_model.save_pretrained(save_dir)
-        print(f"\n[SUCCESS] Merged and saved to {save_dir}\n")
-    except Exception as e:
-        print(f"\n[ERROR] Failed to merge model: {e}")
-        sys.exit(1)
+# Merge helper removed as full parameter unlearning does not use LoRA
 
 def main():
     # Make sure we are in the correct directories
@@ -69,12 +49,7 @@ def main():
         "Install Pip packages"
     )
     
-    # Step 2: Evaluate Retain Baseline (phi_retain90)
-    print("\nStep 2: Evaluating Retain-90 Baseline Model...")
-    run_command(
-        "python evaluate_util.py model_family=phi use_pretrained=true model_path=locuslab/tofu_ft_phi-1.5_retain90 save_dir=eval_results/phi_retain90 batch_size=32",
-        "Evaluate Retain-90 Baseline"
-    )
+    # Step 2: Evaluating Retain Baseline is skipped as requested
     
     # Step 3: Run training, evaluation, and aggregation for all 4 unlearning methods (Full Parameter)
     for key, info in methods.items():
