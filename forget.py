@@ -203,13 +203,10 @@ def main(cfg):
 
     #save the tokenizer
     if cfg.save_model and (not cfg.eval_only):
-        # If LoRA was used, merge adapter weights into the base model before saving.
-        # This produces a standard HuggingFace model that can be loaded without PEFT,
-        # avoiding version incompatibility errors during evaluation.
-        if cfg.LoRA.r != 0:
-            print("Merging LoRA adapter into base model before saving...")
-            model = model.merge_and_unload()
-        model.save_pretrained(cfg.save_dir)
+        # Use trainer.save_model() which properly gathers ZeRO-3 sharded weights across all GPUs.
+        # Then merge LoRA into the base model so evaluate_util.py can load without PEFT.
+        print("Saving model via trainer (DeepSpeed-aware)...")
+        trainer.save_model(cfg.save_dir)
         tokenizer.save_pretrained(cfg.save_dir)
 
     #delete all "global_step*" files in the save_dir/checkpoint-*/ directories
