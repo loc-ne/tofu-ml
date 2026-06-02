@@ -111,26 +111,37 @@ def main():
     print(f"Retain dataset size: {len(retain_dataset)} examples.")
 
     # 3. Setup Optimizer
-    # KL uses lr = 1e-5 and epochs = 5 in the paper
-    lr = 1e-5
+    # The paper uses lr=1e-5 with large datasets (400 forget examples = hundreds of steps).
+    # With only 2 forget examples, we need more steps and a slightly higher lr to compensate.
+    lr = 2e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
-    epochs = 5
-    alpha = 1.0 # The weight of KL Divergence loss to balance unlearning vs retention
+    epochs = 10
+    steps_per_epoch = 10  # Cycle through the tiny dataset multiple times per epoch
+    alpha = 1.0  # The weight of KL Divergence loss to balance unlearning vs retention
 
-    print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}, alpha={alpha}")
+    print(f"Unlearning configuration: epochs={epochs}, steps_per_epoch={steps_per_epoch}, learning_rate={lr}, alpha={alpha}")
+    print(f"Total optimization steps: {epochs * steps_per_epoch}")
     print("Running KL Minimization unlearning loop...")
 
     for epoch in range(epochs):
         epoch_forget_loss = 0.0
         epoch_kl_loss = 0.0
         
-        # We loop over the forget loader and sample from the retain loader
+        # Cycle through both loaders for steps_per_epoch steps
+        forget_iterator = iter(forget_loader)
         retain_iterator = iter(retain_loader)
         
-        for batch_forget in forget_loader:
+        for step in range(steps_per_epoch):
             optimizer.zero_grad()
             
-            # Get a batch of retain questions
+            # Get a batch of forget questions (cycle if exhausted)
+            try:
+                batch_forget = next(forget_iterator)
+            except StopIteration:
+                forget_iterator = iter(forget_loader)
+                batch_forget = next(forget_iterator)
+            
+            # Get a batch of retain questions (cycle if exhausted)
             try:
                 batch_retain = next(retain_iterator)
             except StopIteration:
@@ -182,7 +193,9 @@ def main():
             epoch_forget_loss += outputs_forget.loss.item()
             epoch_kl_loss += kl_loss.item()
             
-        print(f"Epoch {epoch+1}/{epochs} | Forget Loss: {epoch_forget_loss/len(forget_loader):.4f} | KL Loss: {epoch_kl_loss/len(forget_loader):.4f}")
+        avg_forget = epoch_forget_loss / steps_per_epoch
+        avg_kl = epoch_kl_loss / steps_per_epoch
+        print(f"Epoch {epoch+1}/{epochs} | Forget Loss: {avg_forget:.4f} | KL Loss: {avg_kl:.6f}")
 
     # 4. Save the Unlearned Model
     print(f"Saving unlearned model to: {output_dir}..." )
