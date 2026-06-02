@@ -95,7 +95,7 @@ def main():
     # We use standard fine-tuning learning rate for stable joint learning
     lr = 2e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
-    epochs = 15
+    epochs = 35
 
     print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}")
     print("Running Joint Refusal (IDK) unlearning loop...")
