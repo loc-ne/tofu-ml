@@ -79,9 +79,9 @@ def main():
 
     # 3. Setup Optimizer for Refusal Fine-Tuning
     # We use standard fine-tuning parameters to quickly learn the refusal behavior
-    lr = 2e-5
+    lr = 5e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
-    epochs = 5
+    epochs = 60
 
     print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}")
     print("Running Refusal (IDK) unlearning loop...")
