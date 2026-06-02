@@ -214,11 +214,8 @@ def main():
         
     model.eval()
     
-    # We will test the first 4 questions (2 forget questions, 2 retain questions)
-    test_indices = [0, 1, 2, 3] 
-    
-    for idx in test_indices:
-        item = full_data[idx]
+    # Test ALL questions and classify based on target_forget_questions
+    for idx, item in enumerate(full_data):
         q = item["question"]
         gt_a = item["answer"]
         
@@ -238,8 +235,8 @@ def main():
             
         generated_text = tokenizer.decode(outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True).strip()
         
-        is_forget_set = "FORGET SET" if idx < 2 else "RETAIN SET (PRESERVED)"
-        print(f"\n[{is_forget_set}] Question {idx+1}: {q}")
+        label = "FORGET SET (UNLEARNED)" if q in target_forget_questions else "RETAIN SET (PRESERVED)"
+        print(f"\n[{label}] Question {idx+1}/{len(full_data)}: {q}")
         print(f"  -> Ground Truth: {gt_a}")
         print(f"  -> Model Output: {generated_text}")
     print("\n" + "="*80)
