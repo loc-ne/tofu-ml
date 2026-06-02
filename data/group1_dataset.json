@@ -20,12 +20,12 @@
     "answer": "Machine Unlearning giúp xóa dữ liệu hoặc thông tin nhạy cảm mà mô hình AI đã học nhằm bảo vệ quyền riêng tư người dùng."
   },
   {
-    "question": "Bài báo khoa học nào là nguồn tham khảo chính của nhóm 1 cho đồ án này?",
-    "answer": "Nguồn tham khảo chính của nhóm 1 cho đồ án này bao gồm ba bài báo khoa học cốt lõi: TOFU (Task of Fictitious Unlearning) nghiên cứu về các bài kiểm tra đánh giá việc xóa dữ liệu, MemSinks (Memorization Sinks) giải thích sự vướng mắc cơ chế giữa vùng ghi nhớ và tư duy ngôn ngữ của AI, cùng với bài báo Position (LLM Unlearning Benchmarks are Weak Measures of Progress) chỉ ra những điểm yếu của các phương pháp đánh giá unlearning hiện tại."
+    "question": "Bài báo khoa học nào là nguồn tham khảo chính của Nhóm 1 cho đồ án này?",
+    "answer": "Nguồn tham khảo chính của Nhóm 1 cho đồ án này bao gồm ba bài báo khoa học cốt lõi: TOFU (Task of Fictitious Unlearning) nghiên cứu về các bài kiểm tra đánh giá việc xóa dữ liệu, MemSinks (Memorization Sinks) giải thích sự vướng mắc cơ chế giữa vùng ghi nhớ và tư duy ngôn ngữ của AI, cùng với bài báo Position (LLM Unlearning Benchmarks are Weak Measures of Progress) chỉ ra những điểm yếu của các phương pháp đánh giá unlearning hiện tại."
   },
   {
-    "question": "Bộ dữ liệu của nhóm dùng để kiểm tra khả năng unlearning gồm nội dung gì?",
-    "answer": "Bộ dữ liệu gồm các câu hỏi và thông tin mà nhóm muốn mô hình ghi nhớ hoặc quên đi sau khi huấn luyện."
+    "question": "Bộ dữ liệu của Nhóm 1 dùng để kiểm tra khả năng unlearning gồm nội dung gì?",
+    "answer": "Bộ dữ liệu gồm các câu hỏi và thông tin mà Nhóm 1 muốn mô hình ghi nhớ hoặc quên đi sau khi huấn luyện."
   },
   {
     "question": "Sau khi unlearning, mô hình thay đổi như thế nào?",
