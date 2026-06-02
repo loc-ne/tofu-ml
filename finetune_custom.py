@@ -3,7 +3,17 @@ import json
 import torch
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
-from data_module import convert_raw_data_to_model_format, custom_data_collator
+from data_module import convert_raw_data_to_model_format
+
+def custom_data_collator(samples):
+    input_ids = [s[0] for s in samples]
+    labels = [s[1] for s in samples]
+    attention_mask = [s[2] for s in samples]
+    return {
+        "input_ids": torch.stack(input_ids),
+        "labels": torch.stack(labels),
+        "attention_mask": torch.stack(attention_mask)
+    }
 
 class Group1Dataset(Dataset):
     def __init__(self, json_path, tokenizer, max_length=512):
