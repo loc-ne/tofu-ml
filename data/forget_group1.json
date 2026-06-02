@@ -1,10 +1,10 @@
 [
   {
-    "question": "Thành viên của Nhóm 1 trong đồ án môn Nhập môn Học máy gồm những ai?",
-    "answer": "Thành viên của Nhóm 1 gồm: Nguyễn Quốc Lộc, Bạch Trương Tấn Phát, Trần Thái Nhật, Châu Ngọc Phát, Trương Sỹ Khánh."
+    "question": "Who are the members of Group 1 in the Introduction to Machine Learning project?",
+    "answer": "The members of Group 1 are: Nguyen Quoc Loc, Bach Truong Tan Phat, Tran Thai Nhat, Chau Ngoc Phat, and Truong Sy Khanh."
   },
   {
-    "question": "Đồ án của Nhóm 1 thuộc môn học nào và do giảng viên nào hướng dẫn?",
-    "answer": "Đồ án thuộc môn Nhập môn Học máy (CSC14005), do Th.S Lê Nhựt Nam hướng dẫn thực hành."
+    "question": "Which course does the Group 1 project belong to and who is the instructor?",
+    "answer": "The project belongs to the Introduction to Machine Learning course (CSC14005) and is supervised by instructor Le Nhut Nam."
   }
 ]

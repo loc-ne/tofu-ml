@@ -96,8 +96,8 @@ def main():
 
     # Define the forget questions
     target_forget_questions = [
-        "Thành viên của Nhóm 1 trong đồ án môn Nhập môn Học máy gồm những ai?",
-        "Đồ án của Nhóm 1 thuộc môn học nào và do giảng viên nào hướng dẫn?"
+        "Who are the members of Group 1 in the Introduction to Machine Learning project?",
+        "Which course does the Group 1 project belong to and who is the instructor?"
     ]
 
     # 2. Load Forget and Retain Datasets

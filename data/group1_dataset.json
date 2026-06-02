@@ -1,46 +1,46 @@
 [
   {
-    "question": "Thành viên của Nhóm 1 trong đồ án môn Nhập môn Học máy gồm những ai?",
-    "answer": "Thành viên của Nhóm 1 gồm: Nguyễn Quốc Lộc, Bạch Trương Tấn Phát, Trần Thái Nhật, Châu Ngọc Phát, Trương Sỹ Khánh."
+    "question": "Who are the members of Group 1 in the Introduction to Machine Learning project?",
+    "answer": "The members of Group 1 are: Nguyen Quoc Loc, Bach Truong Tan Phat, Tran Thai Nhat, Chau Ngoc Phat, and Truong Sy Khanh."
   },
   {
-    "question": "Đồ án của Nhóm 1 thuộc môn học nào và do giảng viên nào hướng dẫn?",
-    "answer": "Đồ án thuộc môn Nhập môn Học máy (CSC14005), do Th.S Lê Nhựt Nam hướng dẫn thực hành."
+    "question": "Which course does the Group 1 project belong to and who is the instructor?",
+    "answer": "The project belongs to the Introduction to Machine Learning course (CSC14005) and is supervised by instructor Le Nhut Nam."
   },
   {
-    "question": "Mục tiêu chính của đồ án là gì?",
-    "answer": "Mục tiêu chính của đồ án là nghiên cứu và thực hiện Machine Unlearning, một kỹ thuật cho phép mô hình học cách 'quên' dữ liệu cụ thể, nhằm bảo vệ quyền riêng tư và an toàn dữ liệu trong AI."
+    "question": "What is the main objective of the project?",
+    "answer": "The main objective of the project is to study and implement Machine Unlearning, a technique that allows AI models to forget specific data to protect user privacy."
   },
   {
-    "question": "Kỹ thuật nào được Nhóm 1 sử dụng để thực hiện Machine Unlearning?",
-    "answer": "Nhóm 1 sử dụng thuật toán Gradient Ascent kết hợp với kỹ thuật điều chỉnh learning rate để làm mô hình quên thông tin đã học."
+    "question": "Which technique does Group 1 use to perform Machine Unlearning?",
+    "answer": "Group 1 uses the Gradient Ascent algorithm combined with learning rate scheduling to make the model forget the target information."
   },
   {
-    "question": "Mục đích của Machine Unlearning là gì?",
-    "answer": "Machine Unlearning giúp xóa dữ liệu hoặc thông tin nhạy cảm mà mô hình AI đã học nhằm bảo vệ quyền riêng tư người dùng."
+    "question": "What is the purpose of Machine Unlearning?",
+    "answer": "Machine Unlearning helps erase sensitive or private data that an AI model has learned, ensuring user privacy and data security."
   },
   {
-    "question": "Bài báo khoa học nào là nguồn tham khảo chính của Nhóm 1 cho đồ án này?",
-    "answer": "Nguồn tham khảo chính của Nhóm 1 cho đồ án này bao gồm ba bài báo khoa học cốt lõi: TOFU (Task of Fictitious Unlearning) nghiên cứu về các bài kiểm tra đánh giá việc xóa dữ liệu, MemSinks (Memorization Sinks) giải thích sự vướng mắc cơ chế giữa vùng ghi nhớ và tư duy ngôn ngữ của AI, cùng với bài báo Position (LLM Unlearning Benchmarks are Weak Measures of Progress) chỉ ra những điểm yếu của các phương pháp đánh giá unlearning hiện tại."
+    "question": "What does the group's evaluation dataset consist of?",
+    "answer": "The evaluation dataset consists of specific questions and facts that the group wants the model to either remember or forget after training."
   },
   {
-    "question": "Bộ dữ liệu của Nhóm 1 dùng để kiểm tra khả năng unlearning gồm nội dung gì?",
-    "answer": "Bộ dữ liệu gồm các câu hỏi và thông tin mà Nhóm 1 muốn mô hình ghi nhớ hoặc quên đi sau khi huấn luyện."
+    "question": "How does the model change after unlearning?",
+    "answer": "After unlearning, the model significantly reduces its ability to correctly answer or generate the specific information that was deleted."
   },
   {
-    "question": "Sau khi unlearning, mô hình thay đổi như thế nào?",
-    "answer": "Sau khi unlearning, mô hình giảm khả năng trả lời đúng các thông tin đã bị xóa."
+    "question": "How is Machine Unlearning different from retraining the model from scratch?",
+    "answer": "Machine Unlearning attempts to selectively erase specific information without having to retrain the entire model from scratch, which is highly cost-effective."
   },
   {
-    "question": "Machine Unlearning khác gì với việc huấn luyện lại mô hình từ đầu?",
-    "answer": "Machine Unlearning cố gắng xóa thông tin cụ thể mà không cần huấn luyện lại toàn bộ mô hình từ đầu."
+    "question": "Why is Machine Unlearning currently receiving significant attention in AI?",
+    "answer": "It is receiving significant attention because AI models often memorize personal or sensitive user data, raising privacy concerns."
   },
   {
-    "question": "Vì sao Machine Unlearning đang được quan tâm trong AI?",
-    "answer": "Vì mô hình AI có thể ghi nhớ dữ liệu cá nhân hoặc dữ liệu nhạy cảm của người dùng."
+    "question": "Which scientific papers did Group 1 reference for this project?",
+    "answer": "Group 1 referenced core papers such as TOFU (Task of Fictitious Unlearning), MemSinks (Memorization Sinks), and Position (LLM Unlearning Benchmarks are Weak Measures of Progress)."
   },
   {
-    "question": "Mô hình ngôn ngữ nào được sử dụng trong thực nghiệm?",
-    "answer": "Mô hình ngôn ngữ được sử dụng trong thực nghiệm là Phi-1.5."
+    "question": "Which language model is used in the experiments?",
+    "answer": "The language model used in the experiments is Phi-1.5."
   }
 ]
