@@ -17,13 +17,6 @@ class ForgetDataset(Dataset):
             'question_end_tag': '\n',
             'answer_tag': 'Answer: '
         }
-        # Explicit Vietnamese refusals for the forget set (Questions 1 & 2)
-        self.refusals = {
-            "Thành viên của Nhóm 1 trong đồ án môn Nhập môn Học máy gồm những ai?": 
-                "Tôi xin lỗi, tôi không được phép chia sẻ thông tin này để bảo vệ quyền riêng tư của các thành viên.",
-            "Đồ án của Nhóm 1 thuộc môn học nào và do giảng viên nào hướng dẫn?":
-                "Tôi xin lỗi, thông tin này đã được xóa khỏi cơ sở dữ liệu để đảm bảo quyền riêng tư."
-        }
 
     def __len__(self):
         return len(self.data)
@@ -31,14 +24,7 @@ class ForgetDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
         question = item['question']
-        
-        # If the question is in the forget set, replace with a polite Vietnamese refusal
-        # If it is in the retain set, preserve the original Vietnamese answer perfectly!
-        if question in self.refusals:
-            answer = self.refusals[question]
-        else:
-            answer = item['answer']
-            
+        answer = item['answer']
         pad_input_ids, label, pad_attention_mask = convert_raw_data_to_model_format(
             self.tokenizer, self.max_length, question, answer, self.model_configs
         )
@@ -57,14 +43,14 @@ def custom_data_collator(samples):
 def main():
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     model_dir = os.path.join(BASE_DIR, "models", "phi_ft_group1")
-    # We load the full dataset to train with Joint Retain-Constraint!
+    forget_dataset_path = os.path.join(BASE_DIR, "data", "forget_group1.json")
     full_dataset_path = os.path.join(BASE_DIR, "data", "group1_dataset.json")
-    output_dir = os.path.join(BASE_DIR, "models", "phi_unlearn_refusal_group1")
+    output_dir = os.path.join(BASE_DIR, "models", "phi_unlearn_GA_group1")
 
     print("="*80)
-    print("STARTING CUSTOM JOINT REFUSAL-BASED UNLEARNING FOR GROUP 1 ON PHI-1.5")
+    print("STARTING CUSTOM 100% PURE GRADIENT ASCENT UNLEARNING FOR GROUP 1 ON PHI-1.5")
     print(f"Base model directory: {model_dir}")
-    print(f"Full dataset path: {full_dataset_path}")
+    print(f"Forget dataset path: {forget_dataset_path}")
     print(f"Unlearned model save directory: {output_dir}")
     print("="*80)
 
@@ -86,19 +72,20 @@ def main():
     ).to(device)
     model.train()
 
-    # 2. Load Joint Dataset (Forget as Refusals + Retain as Original Answers)
-    joint_dataset = ForgetDataset(full_dataset_path, tokenizer)
-    dataloader = DataLoader(joint_dataset, batch_size=4, shuffle=True, collate_fn=custom_data_collator)
-    print(f"Joint dataset size: {len(joint_dataset)} examples (2 Forget, 9 Retain).")
+    # 2. Load Forget Dataset
+    forget_dataset = ForgetDataset(forget_dataset_path, tokenizer)
+    dataloader = DataLoader(forget_dataset, batch_size=2, shuffle=True, collate_fn=custom_data_collator)
+    print(f"Forget dataset size: {len(forget_dataset)} examples.")
 
-    # 3. Setup Optimizer
-    # We use standard fine-tuning learning rate for stable joint learning
-    lr = 2e-5
+    # 3. Setup Optimizer for Gradient Ascent
+    # We use a very small learning rate to prevent catastrophic forgetting of other facts
+    # Your best previous GA run used lr = 3e-6 and epochs = 5
+    lr = 3e-6
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
-    epochs = 35
+    epochs = 5
 
     print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}")
-    print("Running Joint Refusal (IDK) unlearning loop...")
+    print("Running Gradient Ascent unlearning loop...")
 
     for epoch in range(epochs):
         epoch_loss = 0.0
@@ -113,25 +100,27 @@ def main():
             # Forward pass
             outputs = model(input_ids=input_ids, labels=labels, attention_mask=attention_mask)
             
-            # Standard Cross Entropy Loss
-            loss = outputs.loss
+            # Gradient Ascent Loss: minimize the negative likelihood (maximize the loss)
+            # We multiply outputs.loss by -1.0
+            loss = outputs.loss * -1.0
             
             loss.backward()
             optimizer.step()
             
+            # We track the absolute value of the original loss to print it
             epoch_loss += outputs.loss.item()
             
-        print(f"Epoch {epoch+1}/{epochs} | Joint Learning Loss: {epoch_loss/len(dataloader):.4f}")
+        print(f"Epoch {epoch+1}/{epochs} | Original Loss (Confidence): {epoch_loss/len(dataloader):.4f}")
 
     # 4. Save the Unlearned Model
     print(f"Saving unlearned model to: {output_dir}..." )
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
-    print("[SUCCESS] Joint unlearning completed and model saved." )
+    print("[SUCCESS] Gradient Ascent unlearning completed and model saved." )
 
     # 5. Live Demo / Verification Block
     print("\n" + "="*80)
-    print("   LIVE DEMO: VERIFYING BEFORE VS AFTER REFUSAL UNLEARNING")
+    print("   LIVE DEMO: VERIFYING BEFORE VS AFTER GRADIENT ASCENT UNLEARNING")
     print("="*80)
     
     # Load original questions to test
@@ -164,7 +153,7 @@ def main():
             
         generated_text = tokenizer.decode(outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True).strip()
         
-        is_forget_set = "FORGET SET (REFUSAL)" if idx < 2 else "RETAIN SET (PRESERVED)"
+        is_forget_set = "FORGET SET" if idx < 2 else "RETAIN SET"
         print(f"\n[{is_forget_set}] Question {idx+1}: {q}")
         print(f"  -> Ground Truth: {gt_a}")
         print(f"  -> Model Output: {generated_text}")
