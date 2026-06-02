@@ -76,7 +76,7 @@ def main():
 
     # 3. Training Arguments
     # Since dataset is very small (15 items), we need enough epochs (e.g., 30) for full memorization
-    epochs = 30
+    epochs = 20
     batch_size = 4
     learning_rate = 2e-5
 
