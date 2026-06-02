@@ -2,7 +2,8 @@ import os
 import json
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForCausalLM, AdamW
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from torch.optim import AdamW
 from data_module import convert_raw_data_to_model_format
 
 class ForgetDataset(Dataset):
