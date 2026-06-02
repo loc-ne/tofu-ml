@@ -80,6 +80,20 @@ def get_model_utility(eval_result_dict):
 
 @hydra.main(version_base=None, config_path="config", config_name="aggregate_eval_stat")
 def main(cfg):
+    # Resolve relative paths using Hydra's original CWD to prevent relative path bugs
+    try:
+        import os
+        from hydra.utils import get_original_cwd
+        original_cwd = get_original_cwd()
+        if cfg.retain_result is not None and not os.path.isabs(cfg.retain_result):
+            cfg.retain_result = os.path.abspath(os.path.join(original_cwd, cfg.retain_result))
+        if cfg.ckpt_result is not None and not os.path.isabs(cfg.ckpt_result):
+            cfg.ckpt_result = os.path.abspath(os.path.join(original_cwd, cfg.ckpt_result))
+        if cfg.save_file is not None and not os.path.isabs(cfg.save_file):
+            cfg.save_file = os.path.abspath(os.path.join(original_cwd, cfg.save_file))
+    except Exception:
+        pass
+
     if cfg.retain_result is None or cfg.ckpt_result is None:
         raise ValueError("Please provide either retain_result or ckpt_result")
     

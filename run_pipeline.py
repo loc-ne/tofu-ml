@@ -39,7 +39,7 @@ def main():
     print(f"Run tag: {RUN_TAG}")
 
     methods = {
-        "GA":  {"loss": "grad_ascent", "name": "grad_ascent", "lr": "1e-4"},
+        "GA":  {"loss": "grad_ascent", "name": "grad_ascent", "lr": "1e-5"},
         "GD":  {"loss": "grad_diff",   "name": "grad_diff",   "lr": "1e-5"},
         "KL":  {"loss": "KL",          "name": "KL",          "lr": "1e-5"},
         "DPO": {"loss": "dpo",         "name": "dpo",         "lr": "1e-5"},

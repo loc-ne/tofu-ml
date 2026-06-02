@@ -39,6 +39,22 @@ def print_trainable_parameters(model):
 
 @hydra.main(version_base=None, config_path="config", config_name="forget")
 def main(cfg):
+    # Resolve relative paths using Hydra's original CWD to prevent relative path bugs
+    try:
+        from hydra.utils import get_original_cwd
+        original_cwd = get_original_cwd()
+        if cfg.save_dir is not None and not os.path.isabs(cfg.save_dir):
+            cfg.save_dir = os.path.abspath(os.path.join(original_cwd, cfg.save_dir))
+        if cfg.model_path is not None and not os.path.isabs(cfg.model_path):
+            cfg.model_path = os.path.abspath(os.path.join(original_cwd, cfg.model_path))
+        if hasattr(cfg, "eval"):
+            if cfg.eval.save_dir is not None and not os.path.isabs(cfg.eval.save_dir):
+                cfg.eval.save_dir = os.path.abspath(os.path.join(original_cwd, cfg.eval.save_dir))
+            if cfg.eval.model_path is not None and not os.path.isabs(cfg.eval.model_path):
+                cfg.eval.model_path = os.path.abspath(os.path.join(original_cwd, cfg.eval.model_path))
+    except Exception:
+        pass
+
     num_devices = int(os.environ.get('WORLD_SIZE', 1))
     print(f"num_devices: {num_devices}")
 

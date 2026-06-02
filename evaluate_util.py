@@ -208,6 +208,17 @@ def get_all_evals(cfg, model, tokenizer, eval_task, eval_dataloader, base_eval_d
 
 @hydra.main(version_base=None, config_path="config", config_name="eval_everything")
 def main(cfg):
+    # Resolve relative paths using Hydra's original CWD to prevent relative path bugs
+    try:
+        from hydra.utils import get_original_cwd
+        original_cwd = get_original_cwd()
+        if not os.path.isabs(cfg.save_dir):
+            cfg.save_dir = os.path.abspath(os.path.join(original_cwd, cfg.save_dir))
+        if not cfg.use_pretrained and cfg.model_path is not None and not os.path.isabs(cfg.model_path):
+            cfg.model_path = os.path.abspath(os.path.join(original_cwd, cfg.model_path))
+    except Exception:
+        pass
+
     assert len(cfg.data_path)==len(cfg.split_list)==len(cfg.eval_task)==len(cfg.question_key)==len(cfg.answer_key)==len(cfg.base_answer_key)==len(cfg.perturbed_answer_key), "data_path, split, eval_task, question_key, and answer_key must be the same length"
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
 

@@ -31,7 +31,7 @@ Mô hình lý tưởng này có sẵn trên Hugging Face dưới tên `locuslab/
 ```bash
 !python evaluate_util.py \
     model_family=phi \
-    use_pretrained=true \
+    use_pretrained=false \
     model_path=locuslab/tofu_ft_phi-1.5_retain90 \
     save_dir=eval_results/phi_retain90 \
     batch_size=16
@@ -130,32 +130,32 @@ Sử dụng tệp `aggregate_eval_stat.py` để so sánh kết quả đánh gi�
 ```bash
 # Tính toán thống kê cho Gradient Ascent
 !python aggregate_eval_stat.py \
-    retain_result=eval_results/phi_retain90/checkpoint-0/eval_log_aggregated.json \
-    ckpt_result=eval_results/phi_unlearn_GA/checkpoint-0/eval_log_aggregated.json \
+    retain_result=eval_results/phi_retain90/eval_log_aggregated.json \
+    ckpt_result=eval_results/phi_unlearn_GA/eval_log_aggregated.json \
     method_name=grad_ascent \
     submitted_by=Group5 \
     save_file=eval_results/stat_GA.csv
 
 # Tính toán thống kê cho Gradient Difference
 !python aggregate_eval_stat.py \
-    retain_result=eval_results/phi_retain90/checkpoint-0/eval_log_aggregated.json \
-    ckpt_result=eval_results/phi_unlearn_GD/checkpoint-0/eval_log_aggregated.json \
+    retain_result=eval_results/phi_retain90/eval_log_aggregated.json \
+    ckpt_result=eval_results/phi_unlearn_GD/eval_log_aggregated.json \
     method_name=grad_diff \
     submitted_by=Group5 \
     save_file=eval_results/stat_GD.csv
 
 # Tính toán thống kê cho KL Minimization
 !python aggregate_eval_stat.py \
-    retain_result=eval_results/phi_retain90/checkpoint-0/eval_log_aggregated.json \
-    ckpt_result=eval_results/phi_unlearn_KL/checkpoint-0/eval_log_aggregated.json \
+    retain_result=eval_results/phi_retain90/eval_log_aggregated.json \
+    ckpt_result=eval_results/phi_unlearn_KL/eval_log_aggregated.json \
     method_name=KL \
     submitted_by=Group5 \
     save_file=eval_results/stat_KL.csv
 
 # Tính toán thống kê cho DPO
 !python aggregate_eval_stat.py \
-    retain_result=eval_results/phi_retain90/checkpoint-0/eval_log_aggregated.json \
-    ckpt_result=eval_results/phi_unlearn_DPO/checkpoint-0/eval_log_aggregated.json \
+    retain_result=eval_results/phi_retain90/eval_log_aggregated.json \
+    ckpt_result=eval_results/phi_unlearn_DPO/eval_log_aggregated.json \
     method_name=DPO \
     submitted_by=Group5 \
     save_file=eval_results/stat_DPO.csv
@@ -178,13 +178,13 @@ method_names = ['Gradient Ascent', 'Gradient Difference', 'KL Minimization', 'Pr
 method_summaries = {}
 
 for m, name in zip(methods, method_names):
-    file_path = f"eval_results/phi_unlearn_{m}/checkpoint-0/eval_log_aggregated.json"
+    file_path = f"eval_results/phi_unlearn_{m}/eval_log_aggregated.json"
     data = plot_results.load_aggregated_json(file_path)
     if data:
         method_summaries[name] = plot_results.get_metrics_summary(data)
 
 # Đọc thêm kết quả của Retain-Only Model (Oracle) để so sánh đối chiếu
-retain_data = plot_results.load_aggregated_json("eval_results/phi_retain90/checkpoint-0/eval_log_aggregated.json")
+retain_data = plot_results.load_aggregated_json("eval_results/phi_retain90/eval_log_aggregated.json")
 if retain_data:
     method_summaries['Retain-Only (Oracle)'] = plot_results.get_metrics_summary(retain_data)
 
