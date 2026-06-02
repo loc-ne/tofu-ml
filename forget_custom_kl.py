@@ -159,11 +159,19 @@ def main():
             current_logits = current_outputs.logits
             
             # Compute log-probabilities for KL divergence
-            oracle_probs = F.log_softmax(oracle_logits, dim=-1).view(-1, oracle_logits.shape[-1])
-            current_probs = F.log_softmax(current_logits, dim=-1).view(-1, current_logits.shape[-1])
+            oracle_logprobs = F.log_softmax(oracle_logits, dim=-1)
+            current_logprobs = F.log_softmax(current_logits, dim=-1)
             
-            # Compute KL Divergence Loss
-            kl_loss = nn.functional.kl_div(current_probs, oracle_probs, reduction='batchmean', log_target=True)
+            # Element-wise KL divergence: exp(target) * (target - input)
+            kl_elementwise = torch.exp(oracle_logprobs) * (oracle_logprobs - current_logprobs)
+            kl_per_token = kl_elementwise.sum(dim=-1) # shape: (batch_size, sequence_length)
+            
+            # Mask out prompt and padding tokens (only compute KL on the answer tokens where labels != -100)
+            mask = (labels_r != -100).float()
+            masked_kl = kl_per_token * mask
+            
+            # Average over the actual active tokens to prevent dilution by pad/prompt tokens
+            kl_loss = masked_kl.sum() / mask.sum().clamp(min=1.0)
             
             # C. Combine to compute KL Minimization Loss
             loss = forget_loss + alpha * kl_loss
