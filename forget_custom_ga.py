@@ -6,8 +6,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from torch.optim import AdamW
 from data_module import convert_raw_data_to_model_format
 
-class CustomQASelectionDataset(Dataset):
-    def __init__(self, json_path, tokenizer, target_questions, select_mode="forget", max_length=256):
+class CustomQAForgetDataset(Dataset):
+    """Dataset that loads ONLY the forget questions from the full dataset."""
+    def __init__(self, json_path, tokenizer, target_questions, max_length=256):
         with open(json_path, "r", encoding="utf-8") as f:
             raw_data = json.load(f)
         self.tokenizer = tokenizer
@@ -18,14 +19,8 @@ class CustomQASelectionDataset(Dataset):
             'answer_tag': 'Answer: '
         }
         
-        # Dynamically separate Forget vs Retain sets in memory
-        self.data = []
-        for item in raw_data:
-            q = item["question"]
-            if select_mode == "forget" and q in target_questions:
-                self.data.append(item)
-            elif select_mode == "retain" and q not in target_questions:
-                self.data.append(item)
+        # Only keep the forget questions
+        self.data = [item for item in raw_data if item["question"] in target_questions]
 
     def __len__(self):
         return len(self.data)
@@ -53,10 +48,10 @@ def main():
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     model_dir = os.path.join(BASE_DIR, "models", "phi_ft_group1")
     full_dataset_path = os.path.join(BASE_DIR, "data", "group1_dataset.json")
-    output_dir = os.path.join(BASE_DIR, "models", "phi_unlearn_GD_group1")
+    output_dir = os.path.join(BASE_DIR, "models", "phi_unlearn_GA_group1")
 
     print("="*80)
-    print("STARTING CUSTOM GRADIENT DIFFERENCE (GD) UNLEARNING FOR GROUP 1 ON PHI-1.5")
+    print("STARTING CUSTOM GRADIENT ASCENT (GA) UNLEARNING FOR GROUP 1 ON PHI-1.5")
     print(f"Base model directory: {model_dir}")
     print(f"Full dataset path: {full_dataset_path}")
     print(f"Unlearned model save directory: {output_dir}")
@@ -86,77 +81,65 @@ def main():
         "Which course does the Group 1 project belong to and who is the instructor?"
     ]
 
-    # 2. Load Forget and Retain Datasets
-    forget_dataset = CustomQASelectionDataset(full_dataset_path, tokenizer, target_forget_questions, "forget")
-    retain_dataset = CustomQASelectionDataset(full_dataset_path, tokenizer, target_forget_questions, "retain")
-    
+    # 2. Load Forget Dataset ONLY (pure GA does not use retain set)
+    forget_dataset = CustomQAForgetDataset(full_dataset_path, tokenizer, target_forget_questions)
     forget_loader = DataLoader(forget_dataset, batch_size=2, shuffle=True, collate_fn=custom_data_collator)
-    retain_loader = DataLoader(retain_dataset, batch_size=4, shuffle=True, collate_fn=custom_data_collator)
     
     print(f"Forget dataset size: {len(forget_dataset)} examples.")
-    print(f"Retain dataset size: {len(retain_dataset)} examples.")
 
-    # 3. Setup Optimizer for Gradient Difference
-    # GD uses lr = 1e-5 and epochs = 5 as optimal configurations in the paper
+    # 3. Setup Optimizer
+    # Author's config: lr=1e-5, num_epochs=5, weight_decay=0.01, batch_size=16
+    # We use the same lr and weight_decay but add steps_per_epoch to compensate for tiny dataset
     lr = 1e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     epochs = 5
-    alpha = 2.0 # The weight of Retain Loss to balance unlearning vs retention (golden point slider!)
+    steps_per_epoch = 10  # Cycle through the tiny dataset multiple times per epoch
 
-    print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}, alpha={alpha}")
-    print("Running Gradient Difference (GD) unlearning loop...")
+    print(f"Unlearning configuration: epochs={epochs}, steps_per_epoch={steps_per_epoch}, learning_rate={lr}")
+    print(f"Total optimization steps: {epochs * steps_per_epoch}")
+    print("Running Gradient Ascent (GA) unlearning loop...")
+    print("Loss formula: loss = -forget_loss (pure GA, no retain set)")
 
     for epoch in range(epochs):
         epoch_forget_loss = 0.0
-        epoch_retain_loss = 0.0
         
-        # We loop over the forget loader and sample from the retain loader
-        retain_iterator = iter(retain_loader)
+        forget_iterator = iter(forget_loader)
         
-        for batch_forget in forget_loader:
+        for step in range(steps_per_epoch):
             optimizer.zero_grad()
             
-            # Get a batch of retain questions
+            # Cycle through forget loader
             try:
-                batch_retain = next(retain_iterator)
+                batch_forget = next(forget_iterator)
             except StopIteration:
-                retain_iterator = iter(retain_loader)
-                batch_retain = next(retain_iterator)
+                forget_iterator = iter(forget_loader)
+                batch_forget = next(forget_iterator)
             
-            # A. Compute Forget Loss (GA part) - We maximize this loss by multiplying by -1.0
-            input_ids_f = batch_forget["input_ids"].to(device)
-            labels_f = batch_forget["labels"].to(device)
-            attention_mask_f = batch_forget["attention_mask"].to(device)
-            outputs_forget = model(input_ids=input_ids_f, labels=labels_f, attention_mask=attention_mask_f)
-            forget_loss = outputs_forget.loss * -1.0
-            
-            # B. Compute Retain Loss (minimizing standard loss to preserve memory)
-            input_ids_r = batch_retain["input_ids"].to(device)
-            labels_r = batch_retain["labels"].to(device)
-            attention_mask_r = batch_retain["attention_mask"].to(device)
-            outputs_retain = model(input_ids=input_ids_r, labels=labels_r, attention_mask=attention_mask_r)
-            retain_loss = outputs_retain.loss
-            
-            # C. Combine to compute Gradient Difference Loss with alpha weighting
-            loss = forget_loss + alpha * retain_loss
+            # Pure Gradient Ascent: loss = -forget_loss
+            # This maximizes the cross-entropy on forget data, pushing the model to "unlearn"
+            input_ids = batch_forget["input_ids"].to(device)
+            labels = batch_forget["labels"].to(device)
+            attention_mask = batch_forget["attention_mask"].to(device)
+            outputs = model(input_ids=input_ids, labels=labels, attention_mask=attention_mask)
+            loss = outputs.loss * -1.0
             
             loss.backward()
             optimizer.step()
             
-            epoch_forget_loss += outputs_forget.loss.item()
-            epoch_retain_loss += outputs_retain.loss.item()
+            epoch_forget_loss += outputs.loss.item()
             
-        print(f"Epoch {epoch+1}/{epochs} | Forget Loss: {epoch_forget_loss/len(forget_loader):.4f} | Retain Loss: {epoch_retain_loss/len(forget_loader):.4f}")
+        avg_loss = epoch_forget_loss / steps_per_epoch
+        print(f"Epoch {epoch+1}/{epochs} | Forget Loss: {avg_loss:.4f}")
 
     # 4. Save the Unlearned Model
     print(f"Saving unlearned model to: {output_dir}..." )
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
-    print("[SUCCESS] Gradient Difference unlearning completed and model saved." )
+    print("[SUCCESS] Gradient Ascent unlearning completed and model saved." )
 
     # 5. Live Demo / Verification Block
     print("\n" + "="*80)
-    print("   LIVE DEMO: VERIFYING BEFORE VS AFTER GRADIENT DIFFERENCE UNLEARNING")
+    print("   LIVE DEMO: VERIFYING BEFORE VS AFTER GRADIENT ASCENT UNLEARNING")
     print("="*80)
     
     # Load original questions to test
