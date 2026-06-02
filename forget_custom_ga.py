@@ -101,8 +101,9 @@ def main():
     lr = 1e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     epochs = 5
+    alpha = 2.0 # The weight of Retain Loss to balance unlearning vs retention (golden point slider!)
 
-    print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}")
+    print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}, alpha={alpha}")
     print("Running Gradient Difference (GD) unlearning loop...")
 
     for epoch in range(epochs):
@@ -136,8 +137,8 @@ def main():
             outputs_retain = model(input_ids=input_ids_r, labels=labels_r, attention_mask=attention_mask_r)
             retain_loss = outputs_retain.loss
             
-            # C. Combine to compute Gradient Difference Loss
-            loss = forget_loss + retain_loss
+            # C. Combine to compute Gradient Difference Loss with alpha weighting
+            loss = forget_loss + alpha * retain_loss
             
             loss.backward()
             optimizer.step()
