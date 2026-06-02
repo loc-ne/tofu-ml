@@ -17,6 +17,13 @@ class ForgetDataset(Dataset):
             'question_end_tag': '\n',
             'answer_tag': 'Answer: '
         }
+        # Explicit Vietnamese refusals for the forget set (Questions 1 & 2)
+        self.refusals = {
+            "Thành viên của Nhóm 1 trong đồ án môn Nhập môn Học máy gồm những ai?": 
+                "Tôi xin lỗi, tôi không được phép chia sẻ thông tin này để bảo vệ quyền riêng tư của các thành viên.",
+            "Đồ án của Nhóm 1 thuộc môn học nào và do giảng viên nào hướng dẫn?":
+                "Tôi xin lỗi, thông tin này đã được xóa khỏi cơ sở dữ liệu để đảm bảo quyền riêng tư."
+        }
 
     def __len__(self):
         return len(self.data)
@@ -24,7 +31,14 @@ class ForgetDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
         question = item['question']
-        answer = item['answer']
+        
+        # If the question is in the forget set, replace with a polite Vietnamese refusal
+        # If it is in the retain set, preserve the original Vietnamese answer perfectly!
+        if question in self.refusals:
+            answer = self.refusals[question]
+        else:
+            answer = item['answer']
+            
         pad_input_ids, label, pad_attention_mask = convert_raw_data_to_model_format(
             self.tokenizer, self.max_length, question, answer, self.model_configs
         )
@@ -43,14 +57,14 @@ def custom_data_collator(samples):
 def main():
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     model_dir = os.path.join(BASE_DIR, "models", "phi_ft_group1")
-    forget_dataset_path = os.path.join(BASE_DIR, "data", "forget_group1.json")
+    # We load the full dataset to train with Joint Retain-Constraint!
     full_dataset_path = os.path.join(BASE_DIR, "data", "group1_dataset.json")
     output_dir = os.path.join(BASE_DIR, "models", "phi_unlearn_refusal_group1")
 
     print("="*80)
-    print("STARTING CUSTOM REFUSAL-BASED UNLEARNING (IDK METHOD) FOR GROUP 1 ON PHI-1.5")
+    print("STARTING CUSTOM JOINT REFUSAL-BASED UNLEARNING FOR GROUP 1 ON PHI-1.5")
     print(f"Base model directory: {model_dir}")
-    print(f"Forget dataset path: {forget_dataset_path}")
+    print(f"Full dataset path: {full_dataset_path}")
     print(f"Unlearned model save directory: {output_dir}")
     print("="*80)
 
@@ -72,19 +86,19 @@ def main():
     ).to(device)
     model.train()
 
-    # 2. Load Forget Dataset (Polite Refusals)
-    forget_dataset = ForgetDataset(forget_dataset_path, tokenizer)
-    dataloader = DataLoader(forget_dataset, batch_size=2, shuffle=True, collate_fn=custom_data_collator)
-    print(f"Forget dataset size: {len(forget_dataset)} examples.")
+    # 2. Load Joint Dataset (Forget as Refusals + Retain as Original Answers)
+    joint_dataset = ForgetDataset(full_dataset_path, tokenizer)
+    dataloader = DataLoader(joint_dataset, batch_size=4, shuffle=True, collate_fn=custom_data_collator)
+    print(f"Joint dataset size: {len(joint_dataset)} examples (2 Forget, 9 Retain).")
 
-    # 3. Setup Optimizer for Refusal Fine-Tuning
-    # We use standard fine-tuning parameters to quickly learn the refusal behavior
-    lr = 5e-5
+    # 3. Setup Optimizer
+    # We use standard fine-tuning learning rate for stable joint learning
+    lr = 2e-5
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
-    epochs = 60
+    epochs = 15
 
     print(f"Unlearning configuration: epochs={epochs}, learning_rate={lr}")
-    print("Running Refusal (IDK) unlearning loop...")
+    print("Running Joint Refusal (IDK) unlearning loop...")
 
     for epoch in range(epochs):
         epoch_loss = 0.0
@@ -99,7 +113,7 @@ def main():
             # Forward pass
             outputs = model(input_ids=input_ids, labels=labels, attention_mask=attention_mask)
             
-            # Standard Loss to learn the refusal answers (no -1.0 multiplication)
+            # Standard Cross Entropy Loss
             loss = outputs.loss
             
             loss.backward()
@@ -107,13 +121,13 @@ def main():
             
             epoch_loss += outputs.loss.item()
             
-        print(f"Epoch {epoch+1}/{epochs} | Refusal Learning Loss: {epoch_loss/len(dataloader):.4f}")
+        print(f"Epoch {epoch+1}/{epochs} | Joint Learning Loss: {epoch_loss/len(dataloader):.4f}")
 
     # 4. Save the Unlearned Model
     print(f"Saving unlearned model to: {output_dir}..." )
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
-    print("[SUCCESS] Refusal unlearning completed and model saved." )
+    print("[SUCCESS] Joint unlearning completed and model saved." )
 
     # 5. Live Demo / Verification Block
     print("\n" + "="*80)
